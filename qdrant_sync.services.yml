@@ -1,0 +1,8 @@
+services:
+  plugin.manager.entity_data_builder:
+    class: Drupal\qdrant_sync\EntityDataBuilderManager
+    parent: default_plugin_manager
+
+  qdrant_sync.qdrant_sync_service:
+    class: Drupal\qdrant_sync\QdrantSyncService
+    autowire: true

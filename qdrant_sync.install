@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * Provides install and update hooks for the Qdrant sync module.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Implements hook_requirements().
+ */
+function qdrant_sync_requirements($phase): array {
+  $requirements = [];
+
+  if ($phase == 'runtime') {
+    if (!class_exists('Qdrant\Qdrant')) {
+      $requirements['qdrant_sync_qdrant_php'] = [
+        'title' => t('Qdrant PHP library'),
+        'description' => t('The hkulekci/qdrant-php library is missing.'),
+        'severity' => REQUIREMENT_ERROR,
+      ];
+    }
+    else {
+      $requirements['qdrant_sync_qdrant_php'] = [
+        'title' => t('Qdrant PHP library'),
+        'description' => t('The hkulekci/qdrant-php library is installed.'),
+        'severity' => REQUIREMENT_OK,
+      ];
+    }
+
+    if (!class_exists('OpenAI')) {
+      $requirements['qdrant_sync_openai_php'] = [
+        'title' => t('OpenAI PHP library'),
+        'description' => t('The openai-php/client library is missing.'),
+        'severity' => REQUIREMENT_ERROR,
+      ];
+    }
+    else {
+      $requirements['qdrant_sync_openai_php'] = [
+        'title' => t('OpenAI PHP library'),
+        'description' => t('The openai-php/client library is installed.'),
+        'severity' => REQUIREMENT_OK,
+      ];
+    }
+  }
+
+  return $requirements;
+}

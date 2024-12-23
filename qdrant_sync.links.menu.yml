@@ -1,0 +1,5 @@
+qdrant_sync.settings_form:
+  title: 'Qdrant sync'
+  route_name: 'qdrant_sync.settings_form'
+  parent: system.admin_config_system
+  description: 'Administer and configure Qdrant sync.'

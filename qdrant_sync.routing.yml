@@ -1,0 +1,7 @@
+qdrant_sync.settings_form:
+  path: '/admin/config/system/qdrant-sync'
+  defaults:
+    _form: '\Drupal\qdrant_sync\Form\QdrantSyncSettingsForm'
+    _title: 'Qdrant sync'
+  requirements:
+    _permission: 'administer site configuration'

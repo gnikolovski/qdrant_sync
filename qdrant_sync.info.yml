@@ -1,0 +1,5 @@
+name: 'Qdrant sync'
+type: module
+description: 'Provides Qdrant sync for Drupal content entities.'
+package: AI
+core_version_requirement: ^10 || ^11

@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * @file
+ * Provides Qdrant sync for Drupal content entities.
+ *
+ * This module synchronizes entity data with a Qdrant vector search engine by
+ * handling entity CRUD operations and queueing them for processing.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityPublishedInterface;
+
+require_once 'qdrant_sync.helpers.inc';
+
+/**
+ * Implements hook_entity_insert().
+ *
+ * Handles newly created entities by adding them to the Qdrant sync queue
+ * if they are publishable, currently published, and configured for sync.
+ */
+function qdrant_sync_entity_insert(EntityInterface $entity): void {
+  if (
+    $entity instanceof EntityPublishedInterface &&
+    $entity->isPublished() &&
+    qdrant_sync_should_sync_entity($entity)
+  ) {
+    qdrant_sync_add_to_queue('qdrant_sync_upsert', $entity);
+  }
+}
+
+/**
+ * Implements hook_entity_update().
+ *
+ * Handles entity updates by managing their sync status in Qdrant based on
+ * publication state changes and sync configuration:
+ * - If published -> unpublished: Add to delete queue.
+ * - If published -> published with changes: Add to upsert queue.
+ * - If unpublished -> published: Add to upsert queue.
+ */
+function qdrant_sync_entity_update(EntityInterface $entity): void {
+  if (
+    $entity instanceof EntityPublishedInterface &&
+    qdrant_sync_should_sync_entity($entity)
+  ) {
+    $original = $entity->original ?? NULL;
+    $was_published = $original ? $original->isPublished() : FALSE;
+    $is_published = $entity->isPublished();
+
+    if ($was_published === TRUE && $is_published === FALSE) {
+      qdrant_sync_add_to_queue('qdrant_sync_delete', $entity);
+    }
+    elseif ($is_published === TRUE) {
+      qdrant_sync_add_to_queue('qdrant_sync_upsert', $entity);
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ *
+ * Handles entity deletion by removing the entity from Qdrant if it was
+ * published and configured for sync.
+ */
+function qdrant_sync_entity_delete(EntityInterface $entity): void {
+  if (
+    $entity instanceof EntityPublishedInterface &&
+    $entity->isPublished() &&
+    qdrant_sync_should_sync_entity($entity)
+  ) {
+    qdrant_sync_add_to_queue('qdrant_sync_delete', $entity);
+  }
+}
