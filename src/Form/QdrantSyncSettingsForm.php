@@ -170,6 +170,24 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    if ($collection_name = $config->get('qdrant_collection_name')) {
+      $vector_count = $this->qdrantSyncService->getCollectionVectorCount(
+        $config->get('qdrant_host'),
+        (int) $config->get('qdrant_port'),
+        $config->get('qdrant_api_key'),
+        $collection_name
+      );
+    }
+
+    $form['qdrant']['collection_info'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('Current number of points in collection: @count', [
+        '@count' => $vector_count,
+      ]),
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    ];
+
     $form['content_sync'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Content synchronization'),

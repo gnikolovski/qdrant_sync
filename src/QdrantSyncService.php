@@ -194,4 +194,37 @@ final class QdrantSyncService {
     return array_values($response->embeddings[0]->embedding);
   }
 
+  /**
+   * Gets the number of vectors in a collection.
+   *
+   * @param string $host
+   *   The Qdrant host.
+   * @param int $port
+   *   The Qdrant port.
+   * @param string $api_key
+   *   The Qdrant API key.
+   * @param string $collection_name
+   *   The collection name.
+   *
+   * @return int
+   *   The number of vectors in the collection.
+   */
+  public function getCollectionVectorCount(
+    string $host,
+    int $port,
+    string $api_key,
+    string $collection_name
+  ): int {
+    $client = $this->client($host, $port, $api_key);
+
+    try {
+      /** @var \Qdrant\Response $collection_info */
+      $collection_info = $client->collections($collection_name)->info();
+      return $collection_info->__toArray()['result']['points_count'] ?? 0;
+    }
+    catch (\Exception $e) {
+      return 0;
+    }
+  }
+
 }
