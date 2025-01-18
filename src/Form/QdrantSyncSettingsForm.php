@@ -178,15 +178,50 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
 
     $enabled_builders = $config->get('content_sync.enabled_builders') ?? [];
 
+    $count = 0;
+
     foreach ($this->builderManager->getDefinitions() as $plugin_id => $definition) {
       $form['content_sync']['enabled_builders'][$plugin_id] = [
         '#type' => 'checkbox',
         '#title' => $definition['label'] . ' (' . $definition['entity_type'] . ':' . $definition['entity_bundle'] . ')',
         '#default_value' => !empty($enabled_builders[$plugin_id]),
       ];
+
+      $count += $this->getEntityCount($definition['entity_type'], $definition['entity_bundle']);
     }
 
+    $form['content_sync']['total_entities'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('Total number of entities to sync to Qdrant database: @count', [
+        '@count' => $count,
+      ]),
+    ];
+
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * Gets the count of entities for a specific entity type and bundle.
+   *
+   * @param string $entity_type_id
+   *   The entity type ID.
+   * @param string $bundle
+   *   The bundle name.
+   *
+   * @return int
+   *   The number of entities of the specified type and bundle.
+   */
+  protected function getEntityCount(string $entity_type_id, string $bundle): int {
+    try {
+      $query = $this->entityTypeManager->getStorage($entity_type_id)->getQuery();
+      $query->condition('type', $bundle);
+      $query->condition('status', TRUE);
+      $query->accessCheck(FALSE);
+      return $query->count()->execute();
+    }
+    catch (\Exception $e) {
+      return 0;
+    }
   }
 
   /**
