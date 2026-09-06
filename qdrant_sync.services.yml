@@ -6,3 +6,9 @@ services:
   qdrant_sync.qdrant_sync_service:
     class: Drupal\qdrant_sync\QdrantSyncService
     autowire: true
+
+  qdrant_sync.qdrant_client_factory:
+    class: Drupal\qdrant_sync\QdrantClientFactory
+
+  qdrant_sync.openai_client_factory:
+    class: Drupal\qdrant_sync\OpenAiClientFactory

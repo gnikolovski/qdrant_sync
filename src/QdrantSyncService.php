@@ -10,8 +10,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Qdrant\Config;
-use Qdrant\Http\Builder;
 use Qdrant\Models\Filter\Condition\MatchString;
 use Qdrant\Models\Filter\Filter;
 use Qdrant\Models\PointStruct;
@@ -40,6 +38,10 @@ final class QdrantSyncService {
     protected ConfigFactoryInterface $configFactory,
     #[Autowire(service: 'plugin.manager.entity_data_builder')]
     protected EntityDataBuilderManager $entityDataManager,
+    #[Autowire(service: 'qdrant_sync.qdrant_client_factory')]
+    protected QdrantClientFactory $qdrantClientFactory,
+    #[Autowire(service: 'qdrant_sync.openai_client_factory')]
+    protected OpenAiClientFactory $openAiClientFactory,
   ) {}
 
   /**
@@ -63,7 +65,7 @@ final class QdrantSyncService {
     $config = $this->configFactory->get('qdrant_sync.settings');
 
     if ($qdrant_host === NULL) {
-      $qdrant_host = $config->get('qdrant_host');
+      $qdrant_host = (string) $config->get('qdrant_host');
     }
 
     if ($qdrant_port === NULL) {
@@ -71,14 +73,10 @@ final class QdrantSyncService {
     }
 
     if ($qdrant_api_key === NULL) {
-      $qdrant_api_key = $config->get('qdrant_api_key');
+      $qdrant_api_key = (string) $config->get('qdrant_api_key');
     }
 
-    $qdrant_config = new Config($qdrant_host, $qdrant_port);
-    $qdrant_config->setApiKey($qdrant_api_key);
-
-    $transport = (new Builder())->build($qdrant_config);
-    return new Qdrant($transport);
+    return $this->qdrantClientFactory->create($qdrant_host, $qdrant_port, $qdrant_api_key);
   }
 
   /***
@@ -181,11 +179,11 @@ final class QdrantSyncService {
    */
   protected function getEmbeddingForData(array $data): array {
     $config = $this->configFactory->get('qdrant_sync.settings');
-    $api_key = $config->get('api_key');
+    $api_key = (string) $config->get('api_key');
     $organization_id = $config->get('organization_id');
     $embedding_model = $config->get('embedding_model');
 
-    $openai_client = \OpenAI::client($api_key, $organization_id);
+    $openai_client = $this->openAiClientFactory->create($api_key, $organization_id ?: NULL);
     $response = $openai_client->embeddings()->create([
       'model' => $embedding_model,
       'input' => json_encode($data),
@@ -213,7 +211,7 @@ final class QdrantSyncService {
     string $host,
     int $port,
     string $api_key,
-    string $collection_name
+    string $collection_name,
   ): int {
     $client = $this->client($host, $port, $api_key);
 
