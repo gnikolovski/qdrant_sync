@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\qdrant_sync\Unit;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -24,6 +25,7 @@ use OpenAI\Testing\ClientFake;
 use OpenAI\Testing\Enums\OverrideStrategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\RequestInterface;
 use Qdrant\Http\Transport;
 use Qdrant\Qdrant;
@@ -56,6 +58,8 @@ final class QdrantSyncServiceTest extends UnitTestCase {
 
   /**
    * The arguments each Qdrant client was created with, in order.
+   *
+   * @var array<int, array{string, int, string}>
    */
   private array $qdrantClients = [];
 
@@ -67,22 +71,44 @@ final class QdrantSyncServiceTest extends UnitTestCase {
   /**
    * The logger channel the service writes to.
    */
-  private LoggerChannelInterface $logger;
+  private LoggerChannelInterface&MockObject $logger;
 
   /**
    * The entity data builder manager.
    */
-  private EntityDataBuilderManager $dataBuilderManager;
+  private EntityDataBuilderManager&MockObject $dataBuilderManager;
 
   /**
    * The entity storage for the 'node' entity type.
    */
-  private EntityStorageInterface $nodeStorage;
+  private EntityStorageInterface&MockObject $nodeStorage;
+
+  /**
+   * Encodes a JSON body, failing the test instead of returning false.
+   *
+   * @param array<mixed> $data
+   *   The data to encode.
+   */
+  private static function json(array $data): string {
+    return json_encode($data, JSON_THROW_ON_ERROR);
+  }
+
+  /**
+   * Builds the config factory, typed so the service constructor accepts it.
+   *
+   * @param array<string, array<string, mixed>> $configs
+   *   The config objects keyed by name.
+   */
+  private function configFactory(array $configs): ConfigFactoryInterface {
+    $config_factory = $this->getConfigFactoryStub($configs);
+    assert($config_factory instanceof ConfigFactoryInterface);
+    return $config_factory;
+  }
 
   /**
    * Builds the service.
    *
-   * @param array $qdrant_results
+   * @param array<int, mixed> $qdrant_results
    *   One entry per expected Qdrant request: the 'result' of the reply, or a
    *   \Throwable the transport should raise instead.
    */
@@ -94,7 +120,7 @@ final class QdrantSyncServiceTest extends UnitTestCase {
       if ($result instanceof \Throwable) {
         throw $result;
       }
-      return new HttpResponse(200, ['content-type' => 'application/json'], json_encode([
+      return new HttpResponse(200, ['content-type' => 'application/json'], self::json([
         'status' => 'ok',
         'result' => $result,
       ]));
@@ -124,7 +150,7 @@ final class QdrantSyncServiceTest extends UnitTestCase {
       $entity_type_manager,
       $logger_factory,
       $this->createMock(StateInterface::class),
-      $this->getConfigFactoryStub(self::SETTINGS),
+      $this->configFactory(self::SETTINGS),
       $this->dataBuilderManager,
       $qdrant_factory,
       $openai_factory,
@@ -133,9 +159,12 @@ final class QdrantSyncServiceTest extends UnitTestCase {
 
   /**
    * Decodes the JSON body of a recorded Qdrant request.
+   *
+   * @return array<string, mixed>
+   *   The decoded body.
    */
   private function body(RequestInterface $request): array {
-    return json_decode((string) $request->getBody(), TRUE);
+    return json_decode((string) $request->getBody(), TRUE, 512, JSON_THROW_ON_ERROR);
   }
 
   /**
