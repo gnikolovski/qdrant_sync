@@ -9,8 +9,8 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\qdrant_sync\EntityDataBuilderManager;
+use Drupal\node\NodeInterface;
 use Drupal\qdrant_sync\QdrantSyncQueueItem;
-use Drupal\Tests\qdrant_sync\Unit\Fixture\NodeWithOriginal;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\Group;
@@ -77,14 +77,22 @@ final class QdrantSyncHooksTest extends UnitTestCase {
 
   /**
    * Builds a node of the given bundle and publishing state.
+   *
+   * @param string $bundle
+   *   The node bundle.
+   * @param bool $published
+   *   Whether the node is published.
+   * @param \Drupal\node\NodeInterface|null $original
+   *   The node as it was before the update, for update hooks.
    */
-  private function createNode(string $bundle, bool $published): NodeWithOriginal {
-    $node = $this->createMock(NodeWithOriginal::class);
+  private function createNode(string $bundle, bool $published, ?NodeInterface $original = NULL): NodeInterface {
+    $node = $this->createMock(NodeInterface::class);
     $node->method('getEntityTypeId')->willReturn('node');
     $node->method('bundle')->willReturn($bundle);
     $node->method('id')->willReturn(5);
     $node->method('uuid')->willReturn('uuid-5');
     $node->method('isPublished')->willReturn($published);
+    $node->method('getOriginal')->willReturn($original);
     return $node;
   }
 
@@ -145,8 +153,7 @@ final class QdrantSyncHooksTest extends UnitTestCase {
    * Saving a published article again refreshes it in Qdrant.
    */
   public function testUpdateOfPublishedArticleQueuesAnUpsert(): void {
-    $node = $this->createNode('article', TRUE);
-    $node->original = $this->createNode('article', TRUE);
+    $node = $this->createNode('article', TRUE, $this->createNode('article', TRUE));
 
     qdrant_sync_entity_update($node);
 
@@ -157,8 +164,7 @@ final class QdrantSyncHooksTest extends UnitTestCase {
    * Unpublishing removes the article from Qdrant.
    */
   public function testUnpublishingQueuesDelete(): void {
-    $node = $this->createNode('article', FALSE);
-    $node->original = $this->createNode('article', TRUE);
+    $node = $this->createNode('article', FALSE, $this->createNode('article', TRUE));
 
     qdrant_sync_entity_update($node);
 
@@ -169,8 +175,7 @@ final class QdrantSyncHooksTest extends UnitTestCase {
    * Editing a draft that stays a draft touches nothing.
    */
   public function testUpdateOfDraftThatStaysDraftQueuesNothing(): void {
-    $node = $this->createNode('article', FALSE);
-    $node->original = $this->createNode('article', FALSE);
+    $node = $this->createNode('article', FALSE, $this->createNode('article', FALSE));
 
     qdrant_sync_entity_update($node);
 
@@ -181,8 +186,7 @@ final class QdrantSyncHooksTest extends UnitTestCase {
    * Publishing a draft for the first time queues an upsert.
    */
   public function testPublishingDraftQueuesUpsert(): void {
-    $node = $this->createNode('article', TRUE);
-    $node->original = $this->createNode('article', FALSE);
+    $node = $this->createNode('article', TRUE, $this->createNode('article', FALSE));
 
     qdrant_sync_entity_update($node);
 

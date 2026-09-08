@@ -45,8 +45,8 @@ function qdrant_sync_entity_update(EntityInterface $entity): void {
     $entity instanceof EntityPublishedInterface &&
     qdrant_sync_should_sync_entity($entity)
   ) {
-    $original = $entity->original ?? NULL;
-    $was_published = $original ? $original->isPublished() : FALSE;
+    $original = $entity->getOriginal();
+    $was_published = $original instanceof EntityPublishedInterface && $original->isPublished();
     $is_published = $entity->isPublished();
 
     if ($was_published === TRUE && $is_published === FALSE) {
