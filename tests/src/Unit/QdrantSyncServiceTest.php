@@ -312,10 +312,13 @@ final class QdrantSyncServiceTest extends UnitTestCase {
   }
 
   /**
-   * A failing Qdrant call counts as zero rather than breaking the form.
+   * A failing Qdrant call counts as zero, but says so in the log.
    */
-  public function testGetCollectionVectorCountIsZeroWhenQdrantFails(): void {
+  public function testGetCollectionVectorCountIsZeroAndLoggedWhenQdrantFails(): void {
     $service = $this->createService([new \RuntimeException('Connection refused')]);
+    $this->logger->expects($this->once())
+      ->method('warning')
+      ->with($this->stringContains('point count'), ['@collection' => 'site', '@error' => 'Connection refused']);
 
     $this->assertSame(0, $service->getCollectionVectorCount('other.example.com', 6334, 'other-key', 'site'));
   }

@@ -223,6 +223,10 @@ final class QdrantSyncService {
       return $collection_info->__toArray()['result']['points_count'] ?? 0;
     }
     catch (\Exception $e) {
+      $this->loggerFactory->get('qdrant_sync')->warning('Could not read the point count of collection @collection: @error', [
+        '@collection' => $collection_name,
+        '@error' => $e->getMessage(),
+      ]);
       return 0;
     }
   }

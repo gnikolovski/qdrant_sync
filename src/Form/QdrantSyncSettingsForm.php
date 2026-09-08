@@ -175,12 +175,16 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    // The count call needs the runtime values, with the settings.php
+    // overrides applied: the API key only ever lives there, the editable
+    // config the fields are bound to keeps it empty on purpose.
+    $runtime = $this->configFactory()->get('qdrant_sync.settings');
     $vector_count = 0;
-    if ($collection_name = $config->get('qdrant_collection_name')) {
+    if ($collection_name = $runtime->get('qdrant_collection_name')) {
       $vector_count = $this->qdrantSyncService->getCollectionVectorCount(
-        $config->get('qdrant_host'),
-        (int) $config->get('qdrant_port'),
-        $config->get('qdrant_api_key'),
+        (string) $runtime->get('qdrant_host'),
+        (int) $runtime->get('qdrant_port'),
+        (string) $runtime->get('qdrant_api_key'),
         $collection_name
       );
     }
