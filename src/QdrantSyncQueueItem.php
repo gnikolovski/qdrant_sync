@@ -40,11 +40,17 @@ final readonly class QdrantSyncQueueItem {
    *   A new DTO instance.
    */
   public static function fromEntity(EntityInterface $entity): self {
+    $id = $entity->id();
+    $uuid = $entity->uuid();
+    if ($id === NULL || $uuid === NULL) {
+      throw new \InvalidArgumentException('Only saved entities can be queued for Qdrant sync.');
+    }
+
     return new self(
       $entity->getEntityTypeId(),
       $entity->bundle(),
-      $entity->id(),
-      $entity->uuid(),
+      $id,
+      $uuid,
     );
   }
 
@@ -91,7 +97,7 @@ final readonly class QdrantSyncQueueItem {
   /**
    * Converts the DTO to an array.
    *
-   * @return array
+   * @return array<string, int|string>
    *   The DTO data as an array.
    */
   public function toArray(): array {

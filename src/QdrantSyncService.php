@@ -137,6 +137,8 @@ final class QdrantSyncService {
 
   /**
    * Syncs data to vector database.
+   *
+   * @phpstan-param array<string, mixed> $data
    */
   protected function doSyncData(QdrantSyncQueueItem $queue_item, array $data): void {
     $config = $this->configFactory->get('qdrant_sync.settings');
@@ -171,10 +173,10 @@ final class QdrantSyncService {
   /**
    * Gets the embedding for provided data.
    *
-   * @param array $data
+   * @param array<string, mixed> $data
    *   The data.
    *
-   * @return array
+   * @return array<int, float>
    *   The embedding for provided data.
    */
   protected function getEmbeddingForData(array $data): array {

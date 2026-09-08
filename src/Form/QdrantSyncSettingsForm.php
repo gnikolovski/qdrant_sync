@@ -86,6 +86,8 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritDoc}
+   *
+   * @phpstan-return array<int, string>
    */
   protected function getEditableConfigNames(): array {
     return [
@@ -102,6 +104,9 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritDoc}
+   *
+   * @phpstan-param array<string, mixed> $form
+   * @phpstan-return array<string, mixed>
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('qdrant_sync.settings');
@@ -170,6 +175,7 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $vector_count = 0;
     if ($collection_name = $config->get('qdrant_collection_name')) {
       $vector_count = $this->qdrantSyncService->getCollectionVectorCount(
         $config->get('qdrant_host'),
@@ -244,6 +250,8 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritDoc}
+   *
+   * @phpstan-param array<string, mixed> $form
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     parent::validateForm($form, $form_state);
@@ -267,6 +275,8 @@ class QdrantSyncSettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritDoc}
+   *
+   * @phpstan-param array<string, mixed> $form
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $config = $this->config('qdrant_sync.settings');

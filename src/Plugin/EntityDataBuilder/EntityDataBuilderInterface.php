@@ -17,7 +17,7 @@ interface EntityDataBuilderInterface {
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to build data for.
    *
-   * @return array
+   * @return array<string, mixed>
    *   Structured array.
    */
   public function build(ContentEntityInterface $entity): array;

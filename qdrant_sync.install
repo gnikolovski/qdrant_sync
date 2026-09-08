@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 /**
  * Implements hook_requirements().
+ *
+ * @phpstan-return array<string, array<string, mixed>>
  */
-function qdrant_sync_requirements($phase): array {
+function qdrant_sync_requirements(string $phase): array {
   $requirements = [];
 
   if ($phase == 'runtime') {

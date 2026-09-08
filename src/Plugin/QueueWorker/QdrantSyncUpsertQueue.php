@@ -23,6 +23,8 @@ final class QdrantSyncUpsertQueue extends QueueWorkerBase implements ContainerFa
 
   /**
    * Constructs a new QdrantSyncUpsertQueue instance.
+   *
+   * @phpstan-param array<string, mixed> $configuration
    */
   public function __construct(
     array $configuration,
@@ -35,6 +37,8 @@ final class QdrantSyncUpsertQueue extends QueueWorkerBase implements ContainerFa
 
   /**
    * {@inheritdoc}
+   *
+   * @phpstan-param array<string, mixed> $configuration
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): self {
     return new self(

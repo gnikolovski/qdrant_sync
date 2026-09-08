@@ -8,6 +8,7 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\qdrant_sync\Attribute\EntityDataBuilder;
+use Drupal\qdrant_sync\Plugin\EntityDataBuilder\EntityDataBuilderInterface;
 
 /**
  * Manages entity Data builder plugins.
@@ -17,7 +18,7 @@ class EntityDataBuilderManager extends DefaultPluginManager {
   /**
    * Constructs a EntityDataBuilderManager object.
    *
-   * @param \Traversable $namespaces
+   * @param \Traversable<string, string|string[]> $namespaces
    *   An object that implements \Traversable which contains the root paths
    *   keyed by the corresponding namespace to look for plugin implementations.
    * @param \Drupal\Core\Cache\CacheBackendInterface $cache_backend
@@ -45,13 +46,15 @@ class EntityDataBuilderManager extends DefaultPluginManager {
    * @param string $entity_bundle
    *   The entity bundle.
    *
-   * @return object|null
+   * @return \Drupal\qdrant_sync\Plugin\EntityDataBuilder\EntityDataBuilderInterface|null
    *   The builder plugin, or null if none found.
    */
-  public function getDataBuilderForEntity(string $entity_type, string $entity_bundle): ?object {
+  public function getDataBuilderForEntity(string $entity_type, string $entity_bundle): ?EntityDataBuilderInterface {
     foreach ($this->getDefinitions() as $plugin_id => $definition) {
       if ($definition['entity_type'] === $entity_type && $definition['entity_bundle'] === $entity_bundle) {
-        return $this->createInstance($plugin_id);
+        $instance = $this->createInstance($plugin_id);
+        assert($instance instanceof EntityDataBuilderInterface);
+        return $instance;
       }
     }
 

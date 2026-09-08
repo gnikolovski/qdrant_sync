@@ -14,6 +14,8 @@ abstract class EntityDataBuilderBase extends PluginBase implements EntityDataBui
 
   /**
    * {@inheritdoc}
+   *
+   * @phpstan-return array<string, mixed>
    */
   public function build(ContentEntityInterface $entity): array {
     return [];
